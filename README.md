@@ -1,0 +1,66 @@
+# blocky-ctrl
+
+A remote control for [blocky](https://github.com/0xERR0R/blocky) DNS: pause and resume blocking on one or more instances from your phone, and see a few numbers while you're there. One Go binary, UI embedded, no build step, no database.
+
+It is deliberately small. For graphs and query history, point Grafana at blocky's Prometheus endpoint.
+
+Each instance gets a card with:
+
+- **Pause / resume**: tap the shield to pause for 5 min, 15 min, 1 hour or until resumed, for all groups or only some. While paused it shows the countdown; tap again to resume.
+- **Last 24 hours** from blocky's `/api/stats`: queries, share blocked, share cached, average response time and queries per hour
+- **Details**: most blocked domains, busiest clients, allowlist/denylist sizes per group, refresh lists, flush cache
+
+## Config
+
+```yaml
+instances:
+  - name: Home DNS
+    url: http://10.0.0.53:4000
+  - name: Backup
+    url: http://10.0.0.54:4000
+    readonly: true
+    label: Failover
+```
+
+`url` is blocky's `ports.http`. Credentials in the URL (`http://user:pass@host:4000`) are sent as basic auth, for blocky behind a reverse proxy; they are never shown in the UI.
+
+A `readonly` instance shows its state and stats but has no pause button, and the server refuses to toggle it. Use it for instances that get their blocking state from another one through blocky's `redis` setting, like failovers or load balanced replicas. `label` sets the badge text (default `readonly`). Refresh lists and flush cache still work on it.
+
+Requires blocky v0.35+ with `statistics.enable: true`. An instance without it shows as an error.
+
+## Run
+
+```sh
+blocky-ctrl --config blocky-ctrl.yml --bind 0.0.0.0 --port 8080
+```
+
+| Flag | Default | |
+|---|---|---|
+| `-c`, `--config` | `blocky-ctrl.yml` | config file |
+| `-b`, `--bind` | all interfaces | address to bind to |
+| `-p`, `--port` | `8080` | port to listen on |
+| `-v`, `--version` | | print the version and exit |
+
+There is no login. Run it on a trusted network or behind a reverse proxy with auth. Cross-site POSTs are rejected, so other web pages can't toggle blocking through your browser.
+
+On a phone, "Add to Home Screen" gives it an icon and opens it full screen.
+
+Icons are from [Lucide](https://lucide.dev) (ISC); the licence ships in the binary at `/third-party-licenses.txt`.
+
+## Develop
+
+```sh
+just dev-up    # two blocky v0.35 instances + Redis in OrbStack, the second one read-only
+just traffic   # send some queries to both
+just dev       # http://127.0.0.1:18090
+just test
+just dist      # linux/darwin binaries in dist/
+```
+
+## About
+
+Claude wrote this, with me steering. It does exactly what I wanted, and that's the whole bar. You're welcome to use it, fork it or ignore it, but I won't be acting on complaints or feature requests. No hard feelings either way.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Icons are from Lucide, see above.

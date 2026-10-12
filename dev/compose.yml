@@ -1,0 +1,25 @@
+# Two blocky instances sharing their blocking state through Redis:
+#   docker --context orbstack compose -f dev/compose.yml up -d
+name: blocky-ctrl-dev
+
+x-blocky: &blocky
+  image: ghcr.io/0xerr0r/blocky:v0.35.0
+  depends_on: [redis]
+  volumes:
+    - ./blocky.yml:/app/config.yml:ro
+
+services:
+  redis:
+    image: redis:8-alpine
+
+  primary:
+    <<: *blocky
+    ports:
+      - 127.0.0.1:14101:4000
+      - 127.0.0.1:15301:53/udp
+
+  secondary:
+    <<: *blocky
+    ports:
+      - 127.0.0.1:14102:4000
+      - 127.0.0.1:15302:53/udp

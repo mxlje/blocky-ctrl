@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Blocky">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<title>Blocky</title>
+<link rel="icon" href="{{asset "icon.svg"}}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{asset "icon-180.png"}}">
+<link rel="manifest" href="{{asset "manifest.webmanifest"}}">
+<link rel="stylesheet" href="{{asset "app.css"}}">
+<script src="{{asset "app.js"}}" defer></script>
+<script type="application/json" id="instances">{{.Instances}}</script>
+</head>
+<body>
+<header class="top">
+  <h1>Instances</h1>
+  <p class="conn" id="conn" role="status" hidden>Offline, retrying…</p>
+</header>
+
+<main id="instances-list" class="list"></main>
+
+<footer class="foot">blocky-ctrl {{.Version}}</footer>
+
+<!-- Icons: Lucide (ISC), see /third-party-licenses.txt -->
+<template id="card">
+  <article class="card" data-state="loading" aria-busy="true">
+    <header class="card-head">
+      <div class="who">
+        <h2 class="name"></h2>
+        <p class="host"></p>
+      </div>
+      <span class="badge" hidden></span>
+      <button type="button" class="glyph" disabled>
+        <span class="glyph-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" class="g-on"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+          <svg viewBox="0 0 24 24" class="g-off"><path d="m2 2 20 20"/><path d="M5 5a1 1 0 0 0-1 1v7c0 5 3.5 7.5 7.67 8.94a1 1 0 0 0 .67.01c2.35-.82 4.48-1.97 5.9-3.71"/><path d="M9.309 3.652A12.252 12.252 0 0 0 11.24 2.28a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1v7a9.784 9.784 0 0 1-.08 1.264"/></svg>
+          <svg viewBox="0 0 24 24" class="g-err"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </span>
+        <span class="glyph-text"></span>
+      </button>
+    </header>
+
+    <p class="error-msg" hidden></p>
+
+    <section class="stats" hidden>
+      <dl class="figures">
+        <div><dt>Queries</dt><dd class="f-queries"></dd></div>
+        <div><dt>Blocked</dt><dd class="f-blocked"></dd></div>
+        <div><dt>Cached</dt><dd class="f-cached"></dd></div>
+        <div><dt>Avg time</dt><dd class="f-avg"></dd></div>
+      </dl>
+      <div class="bars" aria-hidden="true"></div>
+      <p class="bars-axis" aria-hidden="true"><span>24 h ago</span><span>now</span></p>
+    </section>
+
+    <section class="more" hidden>
+      <button type="button" class="more-toggle" aria-expanded="false"><span>Details</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="more-body" hidden>
+        <section class="top-blocked"><h3>Most blocked</h3><ol class="rank"></ol></section>
+        <section class="top-clients"><h3>Busiest clients</h3><ol class="rank"></ol></section>
+        <section class="groups-list">
+          <h3>Groups <span class="ratio" aria-hidden="true"><span class="allow">allowed</span> / <span class="deny">denied</span></span></h3>
+          <ul class="rank"></ul>
+        </section>
+        <div class="maint">
+          <button type="button" class="btn btn-quiet" data-act="refresh-lists"><span class="label">Refresh lists</span></button>
+          <button type="button" class="btn btn-quiet" data-act="flush-cache"><span class="label">Flush cache</span></button>
+        </div>
+      </div>
+    </section>
+  </article>
+</template>
+
+<dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+  <div class="sheet-body">
+    <h2 id="sheet-title" tabindex="-1" autofocus>Pause blocking</h2>
+    <p class="sheet-sub" id="sheet-sub"></p>
+    <fieldset class="groups" id="sheet-groups" hidden>
+      <legend>Groups</legend>
+      <div class="chips"></div>
+    </fieldset>
+    <div class="durations" role="group" aria-label="Duration">
+      <button type="button" class="btn btn-choice" data-sec="300">5 min</button>
+      <button type="button" class="btn btn-choice" data-sec="900">15 min</button>
+      <button type="button" class="btn btn-choice" data-sec="3600">1 hour</button>
+      <button type="button" class="btn btn-choice" data-sec="0">Until resumed</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>

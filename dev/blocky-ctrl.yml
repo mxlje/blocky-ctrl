@@ -1,0 +1,7 @@
+instances:
+  - name: Primary
+    url: http://127.0.0.1:14101
+  - name: Secondary
+    url: http://127.0.0.1:14102
+    readonly: true
+    label: Failover

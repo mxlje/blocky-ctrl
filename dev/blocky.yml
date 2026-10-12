@@ -1,0 +1,40 @@
+# Shared by both dev instances. Redis syncs the blocking state between them.
+upstreams:
+  groups:
+    default:
+      - https://dns.quad9.net/dns-query
+bootstrapDns:
+  - upstream: https://dns.quad9.net/dns-query
+    ips: [9.9.9.9]
+ports:
+  dns: 53
+  http: 4000
+customDNS:
+  mapping:
+    nas.lan: 10.0.0.5
+blocking:
+  denylists:
+    ads:
+      - |
+        doubleclick.net
+        ads.example.com
+        *.tracker.test
+    malware:
+      - |
+        malware.example.org
+  allowlists:
+    ads:
+      - |
+        ok.tracker.test
+  clientGroupsBlock:
+    default: [ads, malware]
+  blockType: zeroIp
+redis:
+  address: redis:6379
+  required: true
+statistics:
+  enable: true
+queryLog:
+  type: none
+log:
+  level: info
