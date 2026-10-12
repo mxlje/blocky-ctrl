@@ -44,11 +44,10 @@ blocky-ctrl --config blocky-ctrl.yml --bind 0.0.0.0 --port 8080
 ### Docker
 
 ```sh
-docker build -t blocky-ctrl .
-docker run -d -p 8080:8080 -v ./blocky-ctrl.yml:/config/blocky-ctrl.yml:ro blocky-ctrl
+docker run -d -p 8080:8080 -v ./blocky-ctrl.yml:/config/blocky-ctrl.yml:ro ghcr.io/mxlje/blocky-ctrl:0.0
 ```
 
-The image is the static binary on distroless (about 11 MB) and runs as a non-root user. It has a health check (`blocky-ctrl healthcheck`, which calls `/healthz`). Map ports with `-p` rather than changing `--port`, or the health check won't find the server.
+Tags: `latest`, `0.0` (latest patch) and exact versions like `0.0.2`, for linux/amd64, arm64 and arm/v7. `just image` builds it locally. The image is the static binary on distroless (about 11 MB) and runs as a non-root user. It has a health check (`blocky-ctrl healthcheck`, which calls `/healthz`). Map ports with `-p` rather than changing `--port`, or the health check won't find the server.
 
 There is no login. Run it on a trusted network or behind a reverse proxy with auth. Cross-site POSTs are rejected, so other web pages can't toggle blocking through your browser.
 
@@ -65,6 +64,17 @@ just dev       # http://127.0.0.1:18090
 just test
 just dist      # linux/darwin binaries in dist/
 ```
+
+### Release
+
+Push a `v*` tag:
+
+```sh
+git tag -a v0.1.0 -m v0.1.0
+git push origin v0.1.0
+```
+
+`.github/workflows/release.yml` then runs the tests, pushes the image to `ghcr.io/mxlje/blocky-ctrl` as `0.1.0`, `0.1` and `latest` (linux/amd64, arm64, arm/v7), and creates the GitHub release with the binaries, `SHA256SUMS` and generated notes. The release is only created once the image is pushed. If a step fails, delete the tag (`git push --delete origin v0.1.0 && git tag -d v0.1.0`), fix, and tag again.
 
 ## About
 
