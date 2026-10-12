@@ -16,6 +16,10 @@ dist:
     done
     ls -lh dist
 
+# Build the container image for this machine as blocky-ctrl:dev
+image:
+    docker build --build-arg VERSION={{version}} -t blocky-ctrl:dev .
+
 test:
     go vet ./...
     go test -race ./...

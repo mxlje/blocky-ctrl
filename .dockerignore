@@ -1,0 +1,9 @@
+# Only what the build needs, so stray local binaries never reach the context.
+*
+!go.mod
+!go.sum
+!main.go
+!internal
+!web
+**/*_test.go
+**/.DS_Store

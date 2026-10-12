@@ -41,6 +41,15 @@ blocky-ctrl --config blocky-ctrl.yml --bind 0.0.0.0 --port 8080
 | `-p`, `--port` | `8080` | port to listen on |
 | `-v`, `--version` | | print the version and exit |
 
+### Docker
+
+```sh
+docker build -t blocky-ctrl .
+docker run -d -p 8080:8080 -v ./blocky-ctrl.yml:/config/blocky-ctrl.yml:ro blocky-ctrl
+```
+
+The image is the static binary on distroless (about 11 MB) and runs as a non-root user. It has a health check (`blocky-ctrl healthcheck`, which calls `/healthz`). Map ports with `-p` rather than changing `--port`, or the health check won't find the server.
+
 There is no login. Run it on a trusted network or behind a reverse proxy with auth. Cross-site POSTs are rejected, so other web pages can't toggle blocking through your browser.
 
 On a phone, "Add to Home Screen" gives it an icon and opens it full screen.

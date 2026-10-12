@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"io"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -113,6 +114,10 @@ func New(cfg *config.Config, static fs.FS, version string) (*Server, error) {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.serveIndex)
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		_, _ = io.WriteString(w, "ok\n")
+	})
 	mux.HandleFunc("GET /api/instances/{id}", s.withInstance(s.state))
 	mux.HandleFunc("POST /api/instances/{id}/enable", s.withInstance(s.enable))
 	mux.HandleFunc("POST /api/instances/{id}/disable", s.withInstance(s.disable))

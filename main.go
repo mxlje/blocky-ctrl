@@ -40,7 +40,12 @@ func run() error {
 	alias("p", "port")
 	alias("v", "version")
 	flag.Usage = usage
+
 	flag.Parse()
+	check := flag.Arg(0) == "healthcheck"
+	if check {
+		_ = flag.CommandLine.Parse(flag.Args()[1:]) // flags may follow the subcommand; ExitOnError
+	}
 
 	if *showVersion {
 		fmt.Println(version)
@@ -48,6 +53,9 @@ func run() error {
 	}
 	if flag.NArg() > 0 {
 		return fmt.Errorf("unexpected argument %q", flag.Arg(0))
+	}
+	if check {
+		return healthcheck(healthAddr(*bind, *port))
 	}
 
 	cfg, err := config.Load(*cfgPath)
@@ -88,6 +96,30 @@ func run() error {
 	return nil
 }
 
+// healthAddr is where a server started with the same --bind and --port can be
+// reached from this machine.
+func healthAddr(bind string, port int) string {
+	if ip := net.ParseIP(bind); bind == "" || ip != nil && ip.IsUnspecified() {
+		bind = "127.0.0.1"
+	}
+	return net.JoinHostPort(bind, strconv.Itoa(port))
+}
+
+// healthcheck exits non-zero unless the server at addr answers /healthz. It
+// lets container runtimes check the image, which has no shell or curl.
+func healthcheck(addr string) error {
+	c := &http.Client{Timeout: 3 * time.Second}
+	resp, err := c.Get("http://" + addr + "/healthz")
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("healthcheck: %s", resp.Status)
+	}
+	return nil
+}
+
 // shorts maps long flag names to their one-letter aliases.
 var shorts = map[string]string{}
 
@@ -101,7 +133,7 @@ func alias(short, long string) {
 // usage prints the flags GNU style: one dash for short names, two for long ones.
 func usage() {
 	out := flag.CommandLine.Output()
-	fmt.Fprintf(out, "Usage: %s [options]\n\n", os.Args[0])
+	fmt.Fprintf(out, "Usage: %[1]s [options]\n       %[1]s healthcheck [--bind <address>] [--port <port>]\n\n", os.Args[0])
 	tw := tabwriter.NewWriter(out, 0, 0, 3, ' ', 0)
 	flag.VisitAll(func(f *flag.Flag) {
 		if len(f.Name) == 1 {

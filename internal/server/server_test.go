@@ -142,6 +142,22 @@ func TestIndex(t *testing.T) {
 	}
 }
 
+func TestHealthz(t *testing.T) {
+	srv, main, _ := setup(t)
+	resp, err := http.Get(srv.URL + "/healthz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != 200 || string(b) != "ok\n" {
+		t.Errorf("healthz: %d %q", resp.StatusCode, b)
+	}
+	if len(main.calls) != 0 {
+		t.Errorf("healthz should not call blocky, got %v", main.calls)
+	}
+}
+
 func TestState(t *testing.T) {
 	srv, _, _ := setup(t)
 
