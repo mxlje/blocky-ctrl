@@ -6,7 +6,7 @@ compose := "docker --context orbstack compose -f dev/compose.yml"
 build:
     CGO_ENABLED=0 go build -trimpath -ldflags '{{ldflags}}' -o bin/blocky-ctrl .
 
-# Cross-compile release binaries into dist/
+# Cross-compile release binaries into dist/ (CI does the same in .github/workflows/release.yml)
 dist:
     #!/usr/bin/env bash
     set -euo pipefail
